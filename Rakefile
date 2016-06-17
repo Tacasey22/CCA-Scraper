@@ -5,12 +5,14 @@ require 'pony'
 
 desc 'scrape the cca sports website and send emails to people'
 task :scrape_cca do
+  team = "Kanye's Debt Collectors"
+  email_to = ['alexoverbeck@gmail.com', 'schwab04@gmail.com']
   scraper = Mechanize.new
   scraper.user_agent_alias = 'Mac Safari'
 
   scraper.get('http://www.ccasports.com/leagues/soccer/schedule')
 
-  scraper.page.link_with(text: /Antonia Goalia/).click
+  scraper.page.link_with(text: team).click
 
   game_rows = scraper.page.at_css('.ccareport').children.search('tr')
   details = []
@@ -26,7 +28,7 @@ task :scrape_cca do
         end
 
         unless column.search('a').empty?
-          hash[:enemy] = column.text if column.search('a').first.text != 'Antonia Goalia'
+          hash[:enemy] = column.text if column.search('a').first.text != team
         end
       end
     end
@@ -36,13 +38,14 @@ task :scrape_cca do
   details.each do |game|
     next if game.empty?
     game.each do |key, value|
-      body += "#{key}: #{value} \r\n\r\n"
+      body += "#{key}: #{value} \r\n"
     end
+    body += "\r\n"
   end
 
   Pony.mail(
-    to: 'alexoverbeck@gmail.com',
-    subject: 'Antonia Goalia',
+    to: email_to,
+    subject: "#{team} Schedule",
     body: body,
     via: :smtp,
     via_options: {
